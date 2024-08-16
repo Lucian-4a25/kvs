@@ -362,6 +362,7 @@ dependencies = [
  "failure",
  "predicates",
  "rand",
+ "regex",
  "serde",
  "serde_json",
  "tempfile",
