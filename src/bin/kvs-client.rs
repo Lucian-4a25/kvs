@@ -1,8 +1,12 @@
 use clap::{App, AppSettings, Arg, SubCommand};
+use kvs::init_logger;
 use kvs::validate_addr;
 use kvs::Result;
+use slog::info;
 
 fn main() -> Result<()> {
+    let logger = init_logger();
+
     let matches = App::new(env!("CARGO_PKG_NAME"))
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
@@ -65,7 +69,7 @@ fn main() -> Result<()> {
 
             // 现在 ip_addr 和 port 可以在这里使用
             // println!("IP Address: {}, Port: {}", ip_addr, port);
-            println!("kvs-client listening in: {}", addr_value);
+            info!(logger, "kvs-client listening in: {}", addr_value);
             // do the thing you need to do..
         }
         ("get", Some(matches)) => {
@@ -78,7 +82,7 @@ fn main() -> Result<()> {
 
             // 现在 ip_addr 和 port 可以在这里使用
             // println!("IP Address: {}, Port: {}", ip_addr, port);
-            println!("kvs-client listening in: {}", addr_value);
+            info!(logger, "kvs-client listening in: {}", addr_value);
 
             // do the thing you need to do..
         }
@@ -92,7 +96,7 @@ fn main() -> Result<()> {
 
             // 现在 ip_addr 和 port 可以在这里使用
             // println!("IP Address: {}, Port: {}", ip_addr, port);
-            println!("kvs-client listening in: {}", addr_value);
+            info!(logger, "kvs-client listening in: {}", addr_value);
             // do the thing you need to do..
         }
         _ => unreachable!(),
