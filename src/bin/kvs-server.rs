@@ -1,7 +1,8 @@
-use std::{env, process};
+use std::{env, fmt, net::IpAddr, process, str::FromStr};
 
 use clap::{App, AppSettings, Arg};
-use kvs::{validate_addr, Result};
+use kvs::{init_logger, validate_addr, Result};
+use slog::error;
 
 fn main() -> Result<()> {
     // eprintln!("Program arguments:");
@@ -9,6 +10,7 @@ fn main() -> Result<()> {
     //     eprintln!("  Argument {}: {}", index, argument);
     // }
     // eprintln!("End of arguments");
+    let logger = init_logger();
 
     let matches = App::new(env!("CARGO_PKG_NAME"))
         .version(env!("CARGO_PKG_VERSION"))
@@ -38,14 +40,56 @@ fn main() -> Result<()> {
     let (ip_addr, port) = match validate_addr(addr_value) {
         Ok(result) => result,
         Err(error_message) => {
-            eprint!("解析地址失败");
+            error!(logger, "解析地址失败");
             panic!("{}", error_message);
+        }
+    };
+    let engine_name = matches.value_of("ENGINE").unwrap_or("kvs");
+    let engine: Engine = match engine_name.parse() {
+        Ok(e) => e,
+        Err(e) => {
+            error!(logger, "Invalid engine name: {}", engine_name);
+            panic!("Invalid engine name: {}", engine_name);
         }
     };
 
     // 现在 ip_addr 和 port 可以在这里使用
     // eprintln!("IP Address: {}, Port: {}", ip_addr, port);
-    eprintln!("Listening in: {}", addr_value);
+    error!(logger, "Listening in: {}", addr_value);
 
     Ok(())
 }
+
+#[derive(Debug, PartialEq)]
+pub enum Engine {
+    Kvs,
+    Sled,
+}
+
+impl FromStr for Engine {
+    type Err = String;
+
+    fn from_str(s: &str) -> std::result::Result<Engine, Self::Err> {
+        match s {
+            "kvs" => Ok(Engine::Kvs),
+            "sled" => Ok(Engine::Sled),
+            _ => Err(format!(
+                "'{}' is not a valid engine. Use 'kvs' or 'sled'.",
+                s
+            )),
+        }
+    }
+}
+
+impl fmt::Display for Engine {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let engine_str = match self {
+            Engine::Kvs => "kvs",
+            Engine::Sled => "sled",
+        };
+        write!(f, "{}", engine_str)
+    }
+}
+
+/// 启动服务
+fn start_service(ip_addr: IpAddr, port: u16, engine: Engine) {}
