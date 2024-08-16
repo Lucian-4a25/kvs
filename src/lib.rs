@@ -4,7 +4,7 @@
 pub use engine::KvsEngine;
 pub use error::{KvsError, Result};
 pub use kv::KvStore;
-pub use logger::init_logger;
+pub use logger::{init_logger, LOGGER};
 pub use util::*;
 
 mod engine;

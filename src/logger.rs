@@ -1,6 +1,10 @@
+use once_cell::sync::Lazy;
 use slog::{o, Drain, Level, Logger};
 use slog_async;
 use slog_term;
+
+/// 使用 Lazy 全局共享 Logger 实例
+pub static LOGGER: Lazy<Logger> = Lazy::new(|| init_logger());
 
 /// 初始化日志
 pub fn init_logger() -> Logger {
@@ -21,7 +25,7 @@ pub fn init_logger() -> Logger {
         .fuse();
     let drain_stdout = slog_async::Async::new(drain_stdout)
         .build()
-        .filter(|record| record.level() < Level::Error)
+        .filter(|record| record.level() > Level::Error)
         .fuse();
 
     // 将 stdout 和 stderr 的 Drain 组合在一起

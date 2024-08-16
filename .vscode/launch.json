@@ -21,7 +21,24 @@
             },
             "args": ["--engine", "kvs", "--addr", "127.0.0.1:4001"],
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug kvs-client",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=kvs-client",
+                    "--package=kvs"
+                ],
+                "filter": {
+                    "name": "kvs-client",
+                    "kind": "bin"
+                }
+            },
+            "args": ["get", "key", "--addr", "127.0.0.1:4000"],
+            "cwd": "${workspaceFolder}"
         }
-
     ]
 }

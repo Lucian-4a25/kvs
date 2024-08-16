@@ -1,8 +1,12 @@
-use std::{env, fmt, net::IpAddr, process, str::FromStr};
-
 use clap::{App, AppSettings, Arg};
-use kvs::{init_logger, validate_addr, Result};
-use slog::error;
+use kvs::{validate_addr, Result, LOGGER};
+use slog::{error, info, Logger};
+use std::io::{Read, Write};
+use std::{
+    env, fmt,
+    net::{IpAddr, SocketAddr, TcpListener},
+    str::FromStr,
+};
 
 fn main() -> Result<()> {
     // eprintln!("Program arguments:");
@@ -10,7 +14,6 @@ fn main() -> Result<()> {
     //     eprintln!("  Argument {}: {}", index, argument);
     // }
     // eprintln!("End of arguments");
-    let logger = init_logger();
 
     let matches = App::new(env!("CARGO_PKG_NAME"))
         .version(env!("CARGO_PKG_VERSION"))
@@ -35,12 +38,12 @@ fn main() -> Result<()> {
         )
         .get_matches();
 
-    eprintln!("kvs-server {}:\n", env!("CARGO_PKG_VERSION"));
+    error!(LOGGER, "kvs-server {}:\n", env!("CARGO_PKG_VERSION"));
     let addr_value = matches.value_of("ADDR").unwrap_or("127.0.0.1:4000");
     let (ip_addr, port) = match validate_addr(addr_value) {
         Ok(result) => result,
         Err(error_message) => {
-            error!(logger, "解析地址失败");
+            error!(LOGGER, "解析地址失败");
             panic!("{}", error_message);
         }
     };
@@ -48,16 +51,16 @@ fn main() -> Result<()> {
     let engine: Engine = match engine_name.parse() {
         Ok(e) => e,
         Err(e) => {
-            error!(logger, "Invalid engine name: {}", engine_name);
+            error!(LOGGER, "Invalid engine name: {}", engine_name);
             panic!("Invalid engine name: {}", engine_name);
         }
     };
 
     // 现在 ip_addr 和 port 可以在这里使用
     // eprintln!("IP Address: {}, Port: {}", ip_addr, port);
-    error!(logger, "Listening in: {}", addr_value);
+    error!(LOGGER, "Listening in: {}", addr_value);
 
-    Ok(())
+    start_service(ip_addr, port, engine)
 }
 
 #[derive(Debug, PartialEq)]
@@ -92,4 +95,26 @@ impl fmt::Display for Engine {
 }
 
 /// 启动服务
-fn start_service(ip_addr: IpAddr, port: u16, engine: Engine) {}
+fn start_service(ip_addr: IpAddr, port: u16, engine: Engine) -> Result<()> {
+    // 使用 ip_addr 和 port 构建 SocketAddr
+    let socket_addr = SocketAddr::new(ip_addr, port);
+    let listener = TcpListener::bind(socket_addr)?;
+
+    for stream in listener.incoming() {
+        let mut stream = stream?;
+
+        // 读取客户端发送的请求数据
+        let mut buffer = [0; 512];
+        stream.read(&mut buffer)?;
+        info!(
+            LOGGER,
+            "Received from kvs-client: {}",
+            String::from_utf8_lossy(&buffer[..])
+        );
+
+        // 处理请求并发送响应
+        stream.write(b"Response from kvs-server")?;
+    }
+
+    Ok(())
+}
