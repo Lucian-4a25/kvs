@@ -5,6 +5,7 @@ use std::net::TcpStream;
 
 use clap::{App, AppSettings, Arg, SubCommand};
 use kvs::validate_addr;
+use kvs::ClientCommand;
 use kvs::Result;
 use kvs::LOGGER;
 use serde::Deserialize;
@@ -130,13 +131,6 @@ fn main() -> Result<()> {
     }
 
     Ok(())
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub enum ClientCommand {
-    Set { key: String, value: String },
-    Get { key: String },
-    Remove { key: String },
 }
 
 pub enum ServerResponse {
